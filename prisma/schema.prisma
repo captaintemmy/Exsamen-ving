@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int             @id @default(autoincrement())
+  name      String
+  email     String          @unique
+  barcode   String          @unique
+  createdAt DateTime        @default(now())
+  deposits  Deposit[]
+  tickets   LotteryTicket[]
+}
+
+model Container {
+  id            Int        @id @default(autoincrement())
+  location      String
+  lastEmptiedAt DateTime
+  deposits      Deposit[]
+}
+
+model Deposit {
+  id          Int             @id @default(autoincrement())
+  user        User            @relation(fields: [userId], references: [id])
+  userId      Int
+  container   Container       @relation(fields: [containerId], references: [id])
+  containerId Int
+  units       Int
+  createdAt   DateTime        @default(now())
+  tickets     LotteryTicket[]
+}
+
+model LotteryTicket {
+  id         Int        @id @default(autoincrement())
+  user       User       @relation(fields: [userId], references: [id])
+  userId     Int
+  deposit    Deposit    @relation(fields: [depositId], references: [id])
+  depositId  Int
+  createdAt  DateTime   @default(now())
+  draw       LotteryDraw? @relation("DrawWinner")
+  drawId     Int?
+}
+
+model LotteryDraw {
+  id              Int           @id @default(autoincrement())
+  drawDate        DateTime
+  winnerTicket    LotteryTicket @relation("DrawWinner", fields: [winnerTicketId], references: [id])
+  winnerTicketId  Int           @unique
+}
